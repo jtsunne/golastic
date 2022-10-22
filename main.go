@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -20,6 +21,8 @@ var (
 	pages     = tview.NewPages()
 	tvNodes   = tview.NewTable()
 	tvIndices = tview.NewTable()
+	header    = tview.NewTextView()
+	footer    = tview.NewTextView()
 	c         = &http.Client{Timeout: 10 * time.Second}
 )
 
@@ -43,8 +46,24 @@ func init() {
 
 	RefreshData()
 
-	pages.AddPage("nodes", tvNodes, true, true)
-	pages.AddPage("indices", tvIndices, true, true)
+	header.SetBorder(true)
+	header.SetText("F1: nodes | F2: indices")
+
+	footer.SetBorder(true).SetTitleAlign(tview.AlignRight).SetTitle(" Help ")
+	footer.SetText("Ctrl+I - Sort by Name | Ctrl+O - Sort by DocCount")
+
+	pages.AddPage("nodes",
+		tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(header, 3, 1, false).
+			AddItem(tvNodes, 0, 1, true).
+			AddItem(footer, 3, 1, false),
+		true, true)
+	pages.AddPage("indices",
+		tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(header, 3, 1, false).
+			AddItem(tvIndices, 0, 1, true).
+			AddItem(footer, 3, 1, false),
+		true, true)
 }
 
 func RefreshData() {
@@ -59,6 +78,23 @@ func RefreshData() {
 	})
 
 	FillNodes(nodes, tvNodes)
+	FillIndices(indices, tvIndices)
+}
+
+func SortData(sortBy string) {
+	if sortBy == "docCount" {
+		sort.Slice(indices, func(i, j int) bool {
+			ii, _ := strconv.Atoi(indices[i].DocsCount)
+			ij, _ := strconv.Atoi(indices[j].DocsCount)
+			return ii < ij
+		})
+	}
+	if sortBy == "index" {
+		sort.Slice(indices, func(i, j int) bool {
+			return indices[i].Index < indices[j].Index
+		})
+	}
+
 	FillIndices(indices, tvIndices)
 }
 
@@ -182,12 +218,18 @@ func main() {
 		switch event.Key() {
 		case tcell.KeyCtrlR:
 			RefreshData()
+		case tcell.KeyCtrlI:
+			SortData("index")
+		case tcell.KeyCtrlO:
+			SortData("docCount")
 		case tcell.KeyCtrlQ:
 			app.Stop()
 		case tcell.KeyF1:
+			footer.SetText("Ctrl+I - Sort by IP | Ctrl+O - Sort by Node")
 			pages.SwitchToPage("nodes")
 			return nil
 		case tcell.KeyF2:
+			footer.SetText("Ctrl+I - Sort by Name | Ctrl+O - Sort by DocCount")
 			pages.SwitchToPage("indices")
 			return nil
 		}
