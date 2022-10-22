@@ -10,6 +10,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,6 +24,7 @@ var (
 	tvIndices = tview.NewTable()
 	header    = tview.NewTextView()
 	footer    = tview.NewTextView()
+	filter    = tview.NewInputField()
 	c         = &http.Client{Timeout: 10 * time.Second}
 )
 
@@ -52,6 +54,14 @@ func init() {
 	footer.SetBorder(true).SetTitleAlign(tview.AlignRight).SetTitle(" Help ")
 	footer.SetText("Ctrl+I - Sort by Name | Ctrl+O - Sort by DocCount")
 
+	filter.SetBorder(true).
+		SetTitleAlign(tview.AlignCenter).
+		SetTitle(" Filter ")
+	filter.SetLabel("Index Name Filter: ").SetFieldWidth(30)
+	filter.SetDoneFunc(func(key tcell.Key) {
+		FilterData(filter.GetText())
+	})
+
 	pages.AddPage("nodes",
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(header, 3, 1, false).
@@ -61,6 +71,7 @@ func init() {
 	pages.AddPage("indices",
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(header, 3, 1, false).
+			AddItem(filter, 3, 1, false).
 			AddItem(tvIndices, 0, 1, true).
 			AddItem(footer, 3, 1, false),
 		true, true)
@@ -96,6 +107,18 @@ func SortData(sortBy string) {
 	}
 
 	FillIndices(indices, tvIndices)
+}
+
+func FilterData(s string) {
+	var idxs []Structs.EsIndices
+	for _, item := range indices {
+		if strings.Contains(item.Index, s) {
+			idxs = append(idxs, item)
+		}
+	}
+	tvIndices.Clear()
+	FillIndices(idxs, tvIndices)
+	app.SetFocus(tvIndices)
 }
 
 func FillNodes(n []Structs.EsNode, t *tview.Table) {
@@ -222,6 +245,9 @@ func main() {
 			SortData("index")
 		case tcell.KeyCtrlO:
 			SortData("docCount")
+		case tcell.KeyCtrlBackslash:
+			footer.SetText("KeyBS pressed")
+			app.SetFocus(filter)
 		case tcell.KeyCtrlQ:
 			app.Stop()
 		case tcell.KeyF1:
