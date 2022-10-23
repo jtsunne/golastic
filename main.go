@@ -112,6 +112,8 @@ func RefreshData() {
 
 	FillNodes(nodes, tvNodes)
 	FillIndices(indices, tvIndices)
+	dt := time.Now()
+	footer.SetText("Data refreshed @ " + dt.Format(time.ANSIC))
 }
 
 func SortData(sortBy string) {
@@ -326,6 +328,7 @@ func main() {
 		case tcell.KeyCtrlR:
 			tvIndices.Clear()
 			RefreshData()
+			FilterData(filter.GetText())
 		case tcell.KeyCtrlI:
 			SortData("index")
 		case tcell.KeyCtrlO:
