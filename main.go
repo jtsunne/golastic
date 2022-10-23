@@ -19,6 +19,7 @@ var (
 	EsUrl           string
 	nodes           []Structs.EsNode
 	indices         []Structs.EsIndices
+	clusterNodes    []Structs.EsClusterNode
 	app             = tview.NewApplication()
 	pages           = tview.NewPages()
 	helpPage        = tview.NewTextView()
@@ -105,6 +106,14 @@ func RefreshData() {
 		return nodes[i].Name < nodes[j].Name
 	})
 
+	var clusterNode Structs.EsClusterNode
+	clusterNodes = []Structs.EsClusterNode{}
+	for _, itm := range nodes {
+		// TODO: do not hardcode http schema and port
+		Utils.GetJson(fmt.Sprintf("http://%s:9200/", itm.IP), &clusterNode)
+		clusterNodes = append(clusterNodes, clusterNode)
+	}
+
 	Utils.GetJson(fmt.Sprintf("%s/_cat/indices?format=json", EsUrl), &indices)
 	sort.Slice(indices, func(i, j int) bool {
 		return indices[i].Index < indices[j].Index
@@ -157,6 +166,7 @@ func FilterData(s string) {
 func FillNodes(n []Structs.EsNode, t *tview.Table) {
 	t.Clear()
 	t.SetBorder(true)
+	t.SetTitle(fmt.Sprintf(" Cluster Name: %s ", clusterNodes[0].ClusterName))
 	t.SetCell(0, 0, tview.NewTableCell("IP").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
@@ -187,6 +197,9 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 	t.SetCell(0, 9, tview.NewTableCell("LA 15m").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 10, tview.NewTableCell("Version").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
 	for i, item := range n {
 		t.SetCellSimple(i+1, 0, item.IP)
 		t.SetCellSimple(i+1, 1, item.Name)
@@ -198,6 +211,11 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 		t.SetCellSimple(i+1, 7, item.Load1M)
 		t.SetCellSimple(i+1, 8, item.Load5M)
 		t.SetCellSimple(i+1, 9, item.Load15M)
+		for _, itm := range clusterNodes {
+			if itm.Name == item.Name {
+				t.SetCellSimple(i+1, 10, itm.Version.Number)
+			}
+		}
 	}
 	t.SetFixed(1, 1)
 	t.SetSelectedFunc(func(row, column int) {
