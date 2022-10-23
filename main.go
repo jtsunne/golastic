@@ -21,6 +21,7 @@ var (
 	indices   []Structs.EsIndices
 	app       = tview.NewApplication()
 	pages     = tview.NewPages()
+	helpPage  = tview.NewTextView()
 	tvNodes   = tview.NewTable()
 	tvIndices = tview.NewTable()
 	header    = tview.NewTextView()
@@ -55,9 +56,9 @@ func init() {
 	RefreshData()
 
 	header.SetBorder(true)
-	header.SetText("F1: nodes | F2: indices")
+	header.SetText("F1: Help | F2: Nodes | F3: Indices")
 
-	footer.SetBorder(true).SetTitleAlign(tview.AlignRight).SetTitle(" Help ")
+	footer.SetBorder(true).SetTitleAlign(tview.AlignRight).SetTitle(" Quick Help ")
 	footer.SetText("Ctrl+I - Sort by Name | Ctrl+O - Sort by DocCount")
 
 	filter.SetBorder(true).
@@ -68,6 +69,29 @@ func init() {
 		FilterData(filter.GetText())
 	})
 
+	helpPage.SetBorder(true).SetTitleAlign(tview.AlignCenter).SetTitle(" Help Page ")
+	helpPage.SetText(`
+Use F1 - to see this Help Page
+    F2 - to see the Nodes Page
+    F3 - to see the Indices Page
+
+Global HotKeys:
+    Ctrl+R - refresh all data
+	Ctrl+Q - Quit
+
+Indices Page HotKeys:
+	Ctrl+I - Sort indices by Index Name
+	Ctrl+O - Sort indices by Documents Count
+	Ctrl+\ - Set filter for the Indices view
+	Ctrl+E - Remove selected Index
+	Ctrl+P - Set Replicas Count for the selected index
+`)
+
+	pages.AddPage("help",
+		tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(header, 3, 1, false).
+			AddItem(helpPage, 0, 1, true),
+		true, true)
 	pages.AddPage("nodes",
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(header, 3, 1, false).
@@ -321,10 +345,12 @@ func main() {
 		case tcell.KeyCtrlQ:
 			app.Stop()
 		case tcell.KeyF1:
+			pages.SwitchToPage("help")
+		case tcell.KeyF2:
 			footer.SetText("Ctrl+I - Sort by IP | Ctrl+O - Sort by Node")
 			pages.SwitchToPage("nodes")
 			return nil
-		case tcell.KeyF2:
+		case tcell.KeyF3:
 			footer.SetText("Ctrl+I - Sort by Name | Ctrl+O - Sort by DocCount")
 			pages.SwitchToPage("indices")
 			return nil
