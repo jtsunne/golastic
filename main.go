@@ -16,19 +16,21 @@ import (
 )
 
 var (
-	EsUrl     string
-	nodes     []Structs.EsNode
-	indices   []Structs.EsIndices
-	app       = tview.NewApplication()
-	pages     = tview.NewPages()
-	helpPage  = tview.NewTextView()
-	tvNodes   = tview.NewTable()
-	tvIndices = tview.NewTable()
-	header    = tview.NewTextView()
-	footer    = tview.NewTextView()
-	filter    = tview.NewInputField()
-	formRep   = tview.NewForm()
-	c         = &http.Client{Timeout: 10 * time.Second}
+	EsUrl           string
+	nodes           []Structs.EsNode
+	indices         []Structs.EsIndices
+	app             = tview.NewApplication()
+	pages           = tview.NewPages()
+	helpPage        = tview.NewTextView()
+	tvNodes         = tview.NewTable()
+	tvIndices       = tview.NewTable()
+	header          = tview.NewTextView()
+	footer          = tview.NewTextView()
+	filter          = tview.NewInputField()
+	formRep         = tview.NewForm()
+	sortIndexAsc    = true
+	sortDocCountAsc = true
+	c               = &http.Client{Timeout: 10 * time.Second}
 )
 
 func init() {
@@ -113,17 +115,26 @@ func RefreshData() {
 }
 
 func SortData(sortBy string) {
+
 	if sortBy == "docCount" {
 		sort.Slice(indices, func(i, j int) bool {
 			ii, _ := strconv.Atoi(indices[i].DocsCount)
 			ij, _ := strconv.Atoi(indices[j].DocsCount)
+			if sortDocCountAsc {
+				return ii > ij
+			}
 			return ii < ij
 		})
+		sortDocCountAsc = !sortDocCountAsc
 	}
 	if sortBy == "index" {
 		sort.Slice(indices, func(i, j int) bool {
+			if sortIndexAsc {
+				return indices[i].Index > indices[j].Index
+			}
 			return indices[i].Index < indices[j].Index
 		})
+		sortIndexAsc = !sortIndexAsc
 	}
 
 	FillIndices(indices, tvIndices)
