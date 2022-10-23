@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/jtsunne/golastic/Structs"
+	"github.com/jtsunne/golastic/Utils"
 	"github.com/rivo/tview"
 	"net/http"
 	"os"
@@ -30,16 +30,6 @@ var (
 	formRep   = tview.NewForm()
 	c         = &http.Client{Timeout: 10 * time.Second}
 )
-
-func getJson(url string, target interface{}) error {
-	r, err := c.Get(url)
-	if err != nil {
-		return err
-	}
-	defer r.Body.Close()
-
-	return json.NewDecoder(r.Body).Decode(target)
-}
 
 func init() {
 	if os.Getenv("ESURL") == "" {
@@ -108,12 +98,12 @@ Indices Page HotKeys:
 }
 
 func RefreshData() {
-	getJson(fmt.Sprintf("%s/_cat/nodes?format=json", EsUrl), &nodes)
+	Utils.GetJson(fmt.Sprintf("%s/_cat/nodes?format=json", EsUrl), &nodes)
 	sort.Slice(nodes, func(i, j int) bool {
 		return nodes[i].Name < nodes[j].Name
 	})
 
-	getJson(fmt.Sprintf("%s/_cat/indices?format=json", EsUrl), &indices)
+	Utils.GetJson(fmt.Sprintf("%s/_cat/indices?format=json", EsUrl), &indices)
 	sort.Slice(indices, func(i, j int) bool {
 		return indices[i].Index < indices[j].Index
 	})
