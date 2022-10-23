@@ -286,14 +286,14 @@ func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
 	t.Select(2, 1)
 	t.SetSelectable(true, false)
 	t.SetSelectedFunc(func(row, column int) {
-		selectedFunc(row, column, t)
+		selectedIndexFunc(row, column, t)
 	})
 	t.SetDoneFunc(func(key tcell.Key) {
 		tableDoneFunc(key, t)
 	})
 }
 
-func selectedFunc(row int, col int, tbl *tview.Table) {
+func selectedIndexFunc(row int, col int, tbl *tview.Table) {
 	var selectedIndexName string
 	selectedIndexName = tbl.GetCell(row, 0).Text
 	r, _ := c.Get(fmt.Sprintf("%s/%s/_settings?pretty", EsUrl, selectedIndexName))
