@@ -7,6 +7,7 @@ import (
 	"github.com/jtsunne/golastic/Structs"
 	"github.com/jtsunne/golastic/Utils"
 	"github.com/rivo/tview"
+	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -29,6 +30,7 @@ var (
 	footer          = tview.NewTextView()
 	filter          = tview.NewInputField()
 	formRep         = tview.NewForm()
+	tvInfo          = tview.NewTextView()
 	sortIndexAsc    = true
 	sortDocCountAsc = true
 	c               = &http.Client{Timeout: 10 * time.Second}
@@ -53,6 +55,14 @@ func init() {
 
 	footer.SetBorder(true).SetTitleAlign(tview.AlignRight).SetTitle(" Quick Help ")
 	footer.SetText("Ctrl+I - Sort by Name | Ctrl+O - Sort by DocCount")
+
+	tvInfo.SetBorder(true)
+	tvInfo.SetDynamicColors(true).SetRegions(true)
+	tvInfo.SetDoneFunc(func(k tcell.Key) {
+		if k == tcell.KeyEscape {
+			pages.SwitchToPage("indices")
+		}
+	})
 
 	filter.SetBorder(true).
 		SetTitleAlign(tview.AlignCenter).
@@ -80,6 +90,11 @@ Indices Page HotKeys:
 	Ctrl+P - Set Replicas Count for the selected index
 `)
 
+	pages.AddPage("info",
+		tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(header, 3, 1, false).
+			AddItem(tvInfo, 0, 1, true),
+		true, true)
 	pages.AddPage("help",
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(header, 3, 1, false).
@@ -218,9 +233,9 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 		}
 	}
 	t.SetFixed(1, 1)
-	t.SetSelectedFunc(func(row, column int) {
-		selectedFunc(row, column, t)
-	})
+	//t.SetSelectedFunc(func(row, column int) {
+	//	selectedFunc(row, column, t)
+	//})
 	t.SetDoneFunc(func(key tcell.Key) {
 		tableDoneFunc(key, t)
 	})
@@ -278,10 +293,16 @@ func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
 	})
 }
 
-func selectedFunc(r int, c int, tbl *tview.Table) {
-	//for i := 0; i < tbl.GetColumnCount(); i++ {
-	//	tbl.GetCell(r, i).SetTextColor(tcell.ColorRed)
-	//}
+func selectedFunc(row int, col int, tbl *tview.Table) {
+	var selectedIndexName string
+	selectedIndexName = tbl.GetCell(row, 0).Text
+	r, _ := c.Get(fmt.Sprintf("%s/%s/_settings?pretty", EsUrl, selectedIndexName))
+	defer r.Body.Close()
+
+	tvInfo.SetTitle(fmt.Sprintf(" Index [%s] Settings ", selectedIndexName))
+	body, _ := io.ReadAll(r.Body)
+	tvInfo.SetText(string(body))
+	pages.SwitchToPage("info")
 }
 
 func tableDoneFunc(k tcell.Key, tbl *tview.Table) {
