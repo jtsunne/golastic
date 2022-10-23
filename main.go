@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
@@ -25,6 +26,7 @@ var (
 	header    = tview.NewTextView()
 	footer    = tview.NewTextView()
 	filter    = tview.NewInputField()
+	formRep   = tview.NewForm()
 	c         = &http.Client{Timeout: 10 * time.Second}
 )
 
@@ -39,11 +41,15 @@ func getJson(url string, target interface{}) error {
 }
 
 func init() {
-	if len(os.Args) <= 1 {
-		fmt.Println("Elasticsearch cluster have to be set. Exiting...")
-		os.Exit(0)
+	if os.Getenv("ESURL") == "" {
+		if len(os.Args) <= 1 {
+			fmt.Println("Elasticsearch cluster have to be set. Exiting...")
+			os.Exit(0)
+		}
+		EsUrl = os.Args[1]
+	} else {
+		EsUrl = os.Getenv("ESURL")
 	}
-	EsUrl = os.Args[1]
 	fmt.Println("ES_URL=" + EsUrl)
 
 	RefreshData()
@@ -122,6 +128,7 @@ func FilterData(s string) {
 }
 
 func FillNodes(n []Structs.EsNode, t *tview.Table) {
+	t.Clear()
 	t.SetBorder(true)
 	t.SetCell(0, 0, tview.NewTableCell("IP").
 		SetTextColor(tcell.ColorYellow).
@@ -175,6 +182,7 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 }
 
 func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
+	t.Clear()
 	t.SetBorder(true)
 	t.SetCell(0, 0, tview.NewTableCell("Index").
 		SetTextColor(tcell.ColorYellow).
@@ -216,6 +224,7 @@ func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
 	}
 	t.SetFixed(2, 1)
 	t.Select(2, 1)
+	t.SetSelectable(true, false)
 	t.SetSelectedFunc(func(row, column int) {
 		selectedFunc(row, column, t)
 	})
@@ -225,8 +234,11 @@ func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
 }
 
 func selectedFunc(r int, c int, tbl *tview.Table) {
-	tbl.GetCell(r, c).SetTextColor(tcell.ColorRed)
+	//for i := 0; i < tbl.GetColumnCount(); i++ {
+	//	tbl.GetCell(r, i).SetTextColor(tcell.ColorRed)
+	//}
 }
+
 func tableDoneFunc(k tcell.Key, tbl *tview.Table) {
 	switch k {
 	case tcell.KeyEscape:
@@ -236,10 +248,58 @@ func tableDoneFunc(k tcell.Key, tbl *tview.Table) {
 	}
 }
 
+func DeleteIndexMessageBox(idx string) {
+	mb := tview.NewModal().
+		SetText("Do you want to DELETE index " + idx + "?").
+		AddButtons([]string{"Cancel", "DELETE"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "Cancel" {
+				app.SetRoot(pages, true)
+			}
+			if buttonLabel == "DELETE" {
+				req, _ := http.NewRequest("DELETE", EsUrl+"/"+idx, nil)
+				r, _ := c.Do(req)
+				defer r.Body.Close()
+				app.SetRoot(pages, true)
+			}
+		})
+	app.SetRoot(mb, true)
+}
+
+func SetReplicasMessageBox(idxName string) {
+	var idx Structs.EsIndices
+	var repl string
+	for _, item := range indices {
+		if item.Index == idxName {
+			idx = item
+		}
+	}
+	formRep := tview.NewForm().
+		AddInputField("Replicas", idx.Rep, 5, nil, func(text string) {
+			repl = text
+		}).
+		AddButton("Save", func() {
+			jsonBody := []byte(`{"index" : { "number_of_replicas":` + repl + ` }}`)
+			bodyReader := bytes.NewReader(jsonBody)
+			reqUrl := fmt.Sprintf(EsUrl+"/%s/_settings", idxName)
+			req, _ := http.NewRequest(http.MethodPut, reqUrl, bodyReader)
+			req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+			r, _ := c.Do(req)
+			defer r.Body.Close()
+			app.SetRoot(pages, true)
+		}).
+		AddButton("Cancel", func() {
+			app.SetRoot(pages, true)
+		})
+	formRep.SetBorder(true).SetTitle("Set Replicas [" + idxName + "]")
+	app.SetRoot(formRep, true)
+}
+
 func main() {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyCtrlR:
+			tvIndices.Clear()
 			RefreshData()
 		case tcell.KeyCtrlI:
 			SortData("index")
@@ -248,6 +308,16 @@ func main() {
 		case tcell.KeyCtrlBackslash:
 			footer.SetText("KeyBS pressed")
 			app.SetFocus(filter)
+		case tcell.KeyCtrlE:
+			r, _ := tvIndices.GetSelection()
+			name := tvIndices.GetCell(r, 0)
+			DeleteIndexMessageBox(name.Text)
+			RefreshData()
+		case tcell.KeyCtrlP:
+			r, _ := tvIndices.GetSelection()
+			name := tvIndices.GetCell(r, 0)
+			SetReplicasMessageBox(name.Text)
+			RefreshData()
 		case tcell.KeyCtrlQ:
 			app.Stop()
 		case tcell.KeyF1:
