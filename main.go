@@ -42,9 +42,9 @@ func init() {
 			fmt.Println("Elasticsearch cluster have to be set. Exiting...")
 			os.Exit(0)
 		}
-		EsUrl = os.Args[1]
+		EsUrl = Utils.ParseEsUrl(os.Args[1])
 	} else {
-		EsUrl = os.Getenv("ESURL")
+		EsUrl = Utils.ParseEsUrl(os.Getenv("ESURL"))
 	}
 	fmt.Println("ES_URL=" + EsUrl)
 
@@ -88,6 +88,7 @@ Indices Page HotKeys:
 	Ctrl+\ - Set filter for the Indices view
 	Ctrl+E - Remove selected Index
 	Ctrl+P - Set Replicas Count for the selected index
+	Enter  - Show Index Settings
 `)
 
 	pages.AddPage("info",
