@@ -3,9 +3,11 @@ package Utils
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -42,6 +44,10 @@ func ParseEsUrl(u string) string {
 	if s.Port() != "" {
 		port = s.Port()
 	}
-	domain = s.Host
+	if strings.Contains(s.Host, ":") {
+		domain, port, _ = net.SplitHostPort(s.Host)
+	} else {
+		domain = s.Host
+	}
 	return fmt.Sprintf("%s://%s:%s", schema, domain, port)
 }
