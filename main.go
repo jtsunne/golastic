@@ -64,6 +64,38 @@ func init() {
 		}
 	})
 
+	tvIndices.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyCtrlE:
+			r, _ := tvIndices.GetSelection()
+			name := tvIndices.GetCell(r, 0)
+			DeleteIndexMessageBox(name.Text)
+			RefreshData()
+			return nil
+		case tcell.KeyCtrlP:
+			r, _ := tvIndices.GetSelection()
+			name := tvIndices.GetCell(r, 0)
+			SetReplicasMessageBox(name.Text)
+			RefreshData()
+			return nil
+		}
+		switch event.Rune() {
+		case 'I':
+			SortData("index")
+			return nil
+		case 'i':
+			SortData("index")
+			return nil
+		case 'O':
+			SortData("docCount")
+			return nil
+		case 'o':
+			SortData("docCount")
+			return nil
+		}
+		return event
+	})
+
 	filter.SetBorder(true).
 		SetTitleAlign(tview.AlignCenter).
 		SetTitle(" Filter ")
@@ -373,23 +405,9 @@ func main() {
 			tvIndices.Clear()
 			RefreshData()
 			FilterData(filter.GetText())
-		case tcell.KeyCtrlI:
-			SortData("index")
-		case tcell.KeyCtrlO:
-			SortData("docCount")
 		case tcell.KeyCtrlBackslash:
 			footer.SetText("KeyBS pressed")
 			app.SetFocus(filter)
-		case tcell.KeyCtrlE:
-			r, _ := tvIndices.GetSelection()
-			name := tvIndices.GetCell(r, 0)
-			DeleteIndexMessageBox(name.Text)
-			RefreshData()
-		case tcell.KeyCtrlP:
-			r, _ := tvIndices.GetSelection()
-			name := tvIndices.GetCell(r, 0)
-			SetReplicasMessageBox(name.Text)
-			RefreshData()
 		case tcell.KeyCtrlQ:
 			app.Stop()
 		case tcell.KeyF1:
