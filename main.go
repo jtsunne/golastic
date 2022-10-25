@@ -126,7 +126,11 @@ func RefreshData() {
 	clusterNodes = []Structs.EsClusterNode{}
 	for _, itm := range nodes {
 		// TODO: do not hardcode http schema and port
-		Utils.GetJson(fmt.Sprintf("http://%s:9200/", itm.IP), &clusterNode)
+		err := Utils.GetJson(fmt.Sprintf("http://%s:9200/", itm.IP), &clusterNode)
+		if err != nil {
+			clusterNode.Name = itm.Name
+			clusterNode.Version.Number = "N/A"
+		}
 		clusterNodes = append(clusterNodes, clusterNode)
 	}
 
