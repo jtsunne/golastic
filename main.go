@@ -17,23 +17,24 @@ import (
 )
 
 var (
-	EsUrl           string
-	nodes           []Structs.EsNode
-	indices         []Structs.EsIndices
-	clusterNodes    []Structs.EsClusterNode
-	app             = tview.NewApplication()
-	pages           = tview.NewPages()
-	helpPage        = tview.NewTextView()
-	tvNodes         = tview.NewTable()
-	tvIndices       = tview.NewTable()
-	header          = tview.NewTextView()
-	footer          = tview.NewTextView()
-	filter          = tview.NewInputField()
-	formRep         = tview.NewForm()
-	tvInfo          = tview.NewTextView()
-	sortIndexAsc    = true
-	sortDocCountAsc = true
-	c               = &http.Client{Timeout: 10 * time.Second}
+	EsUrl            string
+	nodes            []Structs.EsNode
+	indices          []Structs.EsIndices
+	clusterNodes     []Structs.EsClusterNode
+	clusterNodesTags []Structs.EsClusterNodeTags
+	app              = tview.NewApplication()
+	pages            = tview.NewPages()
+	helpPage         = tview.NewTextView()
+	tvNodes          = tview.NewTable()
+	tvIndices        = tview.NewTable()
+	header           = tview.NewTextView()
+	footer           = tview.NewTextView()
+	filter           = tview.NewInputField()
+	formRep          = tview.NewForm()
+	tvInfo           = tview.NewTextView()
+	sortIndexAsc     = true
+	sortDocCountAsc  = true
+	c                = &http.Client{Timeout: 10 * time.Second}
 )
 
 func init() {
@@ -154,6 +155,8 @@ func RefreshData() {
 		return nodes[i].Name < nodes[j].Name
 	})
 
+	Utils.GetJson(fmt.Sprintf("%s/_cat/nodeattrs?format=json", EsUrl), &clusterNodesTags)
+
 	var clusterNode Structs.EsClusterNode
 	clusterNodes = []Structs.EsClusterNode{}
 	for _, itm := range nodes {
@@ -164,6 +167,7 @@ func RefreshData() {
 			clusterNode.Version.Number = "N/A"
 		}
 		clusterNodes = append(clusterNodes, clusterNode)
+
 	}
 
 	Utils.GetJson(fmt.Sprintf("%s/_cat/indices?format=json", EsUrl), &indices)
@@ -252,6 +256,9 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 	t.SetCell(0, 10, tview.NewTableCell("Version").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 11, tview.NewTableCell("Tags").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
 	for i, item := range n {
 		t.SetCellSimple(i+1, 0, item.IP)
 		t.SetCellSimple(i+1, 1, item.Name)
@@ -268,6 +275,20 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 				t.SetCellSimple(i+1, 10, itm.Version.Number)
 			}
 		}
+		s := ""
+		for _, itm := range clusterNodesTags {
+			if itm.Ip == item.IP {
+				if s == "" {
+					s = itm.Attr + "=" + itm.Value
+				} else {
+					s = s + "," + itm.Attr + "=" + itm.Value
+				}
+			}
+		}
+		if s == "" {
+			s = "N/A"
+		}
+		t.SetCellSimple(i+1, 11, s)
 	}
 	t.SetFixed(1, 1)
 	//t.SetSelectedFunc(func(row, column int) {

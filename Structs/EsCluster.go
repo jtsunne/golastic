@@ -19,3 +19,11 @@ type EsClusterNode struct {
 	} `json:"version"`
 	Tagline string `json:"tagline"`
 }
+
+type EsClusterNodeTags struct {
+	Node  string `json:"node"`
+	Host  string `json:"host"`
+	Ip    string `json:"ip"`
+	Attr  string `json:"attr"`
+	Value string `json:"value"`
+}
