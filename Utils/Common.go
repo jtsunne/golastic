@@ -16,7 +16,9 @@ var (
 )
 
 func GetJson(url string, target interface{}) error {
-	r, err := c.Get(url)
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	r, err := c.Do(req)
 	if err != nil {
 		return err
 	}
