@@ -31,7 +31,6 @@ var (
 	header           = tview.NewTextView()
 	footer           = tview.NewTextView()
 	filter           = tview.NewInputField()
-	formRep          = tview.NewForm()
 	tvInfo           = tview.NewTextView()
 	sortIndexAsc     = true
 	sortDocCountAsc  = true
@@ -335,7 +334,7 @@ func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
 	})
 }
 
-func selectedIndexFunc(row int, col int, tbl *tview.Table) {
+func selectedIndexFunc(row int, _ int, tbl *tview.Table) {
 	var selectedIndexName string
 	selectedIndexName = tbl.GetCell(row, 0).Text
 	r, _ := c.Get(fmt.Sprintf("%s/%s/_settings?pretty", EsUrl, selectedIndexName))
