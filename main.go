@@ -21,6 +21,7 @@ var (
 	EsUrl            string
 	nodes            []Structs.EsNode
 	indices          []Structs.EsIndices
+	idxAliases       []Structs.EsIndexAlias
 	clusterNodes     []Structs.EsClusterNode
 	clusterNodesTags []Structs.EsClusterNodeTags
 	app              = tview.NewApplication()
@@ -157,6 +158,7 @@ func RefreshData() {
 	sort.Slice(indices, func(i, j int) bool {
 		return indices[i].Index < indices[j].Index
 	})
+	Utils.GetJson(fmt.Sprintf("%s/_cat/aliases?format=json", EsUrl), &idxAliases)
 
 	FillNodes(nodes, tvNodes)
 	FillIndices(indices, tvIndices)
@@ -288,40 +290,50 @@ func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
 	t.SetCell(0, 0, tview.NewTableCell("Index").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 1, tview.NewTableCell("Health").
+	t.SetCell(0, 1, tview.NewTableCell("Index").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 2, tview.NewTableCell("Status").
+	t.SetCell(0, 2, tview.NewTableCell("Health").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 3, tview.NewTableCell("Primary").
+	t.SetCell(0, 3, tview.NewTableCell("Status").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 4, tview.NewTableCell("Replicas").
+	t.SetCell(0, 4, tview.NewTableCell("Primary").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 5, tview.NewTableCell("Doc Count").
+	t.SetCell(0, 5, tview.NewTableCell("Replicas").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 6, tview.NewTableCell("Doc Deleted").
+	t.SetCell(0, 6, tview.NewTableCell("Doc Count").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 7, tview.NewTableCell("Primary Store Size").
+	t.SetCell(0, 7, tview.NewTableCell("Doc Deleted").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 8, tview.NewTableCell("Store Size").
+	t.SetCell(0, 8, tview.NewTableCell("Primary Store Size").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 9, tview.NewTableCell("Store Size").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
 	for i, item := range idxs {
 		t.SetCellSimple(i+1, 0, item.Index)
-		t.SetCellSimple(i+1, 1, item.Health)
-		t.SetCellSimple(i+1, 2, item.Status)
-		t.SetCellSimple(i+1, 3, item.Pri)
-		t.SetCellSimple(i+1, 4, item.Rep)
-		t.SetCellSimple(i+1, 5, item.DocsCount)
-		t.SetCellSimple(i+1, 6, item.DocsDeleted)
-		t.SetCellSimple(i+1, 7, item.PriStoreSize)
-		t.SetCellSimple(i+1, 8, item.StoreSize)
+		s := "-"
+		for _, itm := range idxAliases {
+			if itm.Index == item.Index {
+				s = itm.Alias
+			}
+		}
+		t.SetCellSimple(i+1, 1, s)
+		t.SetCellSimple(i+1, 2, item.Health)
+		t.SetCellSimple(i+1, 3, item.Status)
+		t.SetCellSimple(i+1, 4, item.Pri)
+		t.SetCellSimple(i+1, 5, item.Rep)
+		t.SetCellSimple(i+1, 6, item.DocsCount)
+		t.SetCellSimple(i+1, 7, item.DocsDeleted)
+		t.SetCellSimple(i+1, 8, item.PriStoreSize)
+		t.SetCellSimple(i+1, 9, item.StoreSize)
 	}
 	t.SetFixed(2, 1)
 	t.Select(2, 1)

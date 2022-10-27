@@ -12,3 +12,11 @@ type EsIndices struct {
 	StoreSize    string `json:"store.size"`
 	PriStoreSize string `json:"pri.store.size"`
 }
+
+type EsIndexAlias struct {
+	Alias         string `json:"alias"`
+	Index         string `json:"index"`
+	Filter        string `json:"filter"`
+	RoutingIndex  string `json:"routing.index"`
+	RoutingSearch string `json:"routing.search"`
+}
