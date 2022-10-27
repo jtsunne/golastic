@@ -6,6 +6,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/jtsunne/golastic/Structs"
 	"github.com/jtsunne/golastic/Utils"
+	"github.com/jtsunne/golastic/Views"
 	"github.com/rivo/tview"
 	"io"
 	"net/http"
@@ -105,24 +106,7 @@ func init() {
 		FilterData(filter.GetText())
 	})
 
-	helpPage.SetBorder(true).SetTitleAlign(tview.AlignCenter).SetTitle(" Help Page ")
-	helpPage.SetText(`
-Use F1 - to see this Help Page
-    F2 - to see the Nodes Page
-    F3 - to see the Indices Page
-
-Global HotKeys:
-    Ctrl+R - refresh all data
-	Ctrl+Q - Quit
-
-Indices Page HotKeys:
-	Ctrl+I - Sort indices by Index Name
-	Ctrl+O - Sort indices by Documents Count
-	Ctrl+\ - Set filter for the Indices view
-	Ctrl+E - Remove selected Index
-	Ctrl+P - Set Replicas Count for the selected index
-	Enter  - Show Index Settings
-`)
+	Views.MakeHelpPage(helpPage)
 
 	pages.AddPage("info",
 		tview.NewFlex().SetDirection(tview.FlexRow).
