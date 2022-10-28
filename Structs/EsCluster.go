@@ -27,3 +27,22 @@ type EsClusterNodeTags struct {
 	Attr  string `json:"attr"`
 	Value string `json:"value"`
 }
+
+type EsClusterRepository struct {
+	Id   string `json:"id"`
+	Type string `json:"type"`
+}
+
+type EsSnapshot struct {
+	Id               string `json:"id"`
+	Status           string `json:"status"`
+	StartEpoch       string `json:"start_epoch"`
+	StartTime        string `json:"start_time"`
+	EndEpoch         string `json:"end_epoch"`
+	EndTime          string `json:"end_time"`
+	Duration         string `json:"duration"`
+	Indices          string `json:"indices"`
+	SuccessfulShards string `json:"successful_shards"`
+	FailedShards     string `json:"failed_shards"`
+	TotalShards      string `json:"total_shards"`
+}

@@ -24,11 +24,15 @@ var (
 	idxAliases       []Structs.EsIndexAlias
 	clusterNodes     []Structs.EsClusterNode
 	clusterNodesTags []Structs.EsClusterNodeTags
+	clusterRepos     []Structs.EsClusterRepository
+	clusterSnapshots map[string][]Structs.EsSnapshot
 	app              = tview.NewApplication()
 	pages            = tview.NewPages()
 	helpPage         = tview.NewTextView()
 	tvNodes          = tview.NewTable()
 	tvIndices        = tview.NewTable()
+	repoTable        = tview.NewTable()
+	snapshotTable    = tview.NewTable()
 	header           = tview.NewTextView()
 	footer           = tview.NewTextView()
 	filter           = tview.NewInputField()
@@ -98,6 +102,24 @@ func init() {
 		return event
 	})
 
+	repoTable.SetBorder(true).
+		SetTitleAlign(tview.AlignCenter).
+		SetTitle("Repositories")
+	snapshotTable.SetBorder(true).
+		SetTitleAlign(tview.AlignCenter).
+		SetTitle("Snapshots")
+	tvNodes.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+
+		}
+		switch event.Rune() {
+		case 'r':
+			pages.SwitchToPage("repos")
+			return nil
+		}
+		return event
+	})
+
 	filter.SetBorder(true).
 		SetTitleAlign(tview.AlignCenter).
 		SetTitle(" Filter ")
@@ -112,6 +134,12 @@ func init() {
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(header, 3, 1, false).
 			AddItem(tvInfo, 0, 1, true),
+		true, true)
+	pages.AddPage("repos",
+		tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(header, 3, 1, false).
+			AddItem(repoTable, 0, 1, true).
+			AddItem(snapshotTable, 0, 1, false),
 		true, true)
 	pages.AddPage("help",
 		tview.NewFlex().SetDirection(tview.FlexRow).
@@ -159,9 +187,17 @@ func RefreshData() {
 		return indices[i].Index < indices[j].Index
 	})
 	Utils.GetJson(fmt.Sprintf("%s/_cat/aliases?format=json", EsUrl), &idxAliases)
+	Utils.GetJson(fmt.Sprintf("%s/_cat/repositories?format=json", EsUrl), &clusterRepos)
+	clusterSnapshots = make(map[string][]Structs.EsSnapshot)
+	for _, itm := range clusterRepos {
+		var s []Structs.EsSnapshot
+		Utils.GetJson(fmt.Sprintf("%s/_cat/snapshots/%s?format=json", EsUrl, itm.Id), &s)
+		clusterSnapshots[itm.Id] = s
+	}
 
 	FillNodes(nodes, tvNodes)
 	FillIndices(indices, tvIndices)
+	FillRepos(clusterRepos, repoTable)
 	dt := time.Now()
 	footer.SetText("Data refreshed @ " + dt.Format(time.ANSIC))
 }
@@ -343,6 +379,86 @@ func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
 	})
 	t.SetDoneFunc(func(key tcell.Key) {
 		tableDoneFunc(key, t)
+	})
+}
+
+func FillRepos(r []Structs.EsClusterRepository, t *tview.Table) {
+	t.Clear()
+	t.SetBorder(true)
+	t.SetCell(0, 0, tview.NewTableCell("Id").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 1, tview.NewTableCell("Type").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	for i, itm := range r {
+		t.SetCellSimple(i+1, 0, itm.Id)
+		t.SetCellSimple(i+1, 1, itm.Type)
+	}
+	t.SetFixed(2, 1)
+	t.Select(2, 1)
+	t.SetSelectable(true, false)
+	t.SetSelectedFunc(func(row, column int) {
+		repo := t.GetCell(row, 0).Text
+		FillSnapshot(repo, snapshotTable)
+		app.SetFocus(snapshotTable)
+	})
+	t.SetDoneFunc(func(key tcell.Key) {
+		pages.SwitchToPage("nodes")
+	})
+}
+
+func FillSnapshot(repoName string, t *tview.Table) {
+	t.Clear()
+	t.SetBorder(true)
+	t.SetTitle("Snapshots [" + repoName + "]")
+	t.SetCell(0, 0, tview.NewTableCell("Id").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 1, tview.NewTableCell("Status").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 2, tview.NewTableCell("Start Time").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 3, tview.NewTableCell("End Time").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 4, tview.NewTableCell("Duration").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 5, tview.NewTableCell("Indices").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 6, tview.NewTableCell("Successful Shards").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 7, tview.NewTableCell("Failed Shards").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 8, tview.NewTableCell("Total Shards").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	for i, itm := range clusterSnapshots[repoName] {
+		t.SetCellSimple(i+1, 0, itm.Id)
+		t.SetCellSimple(i+1, 1, itm.Status)
+		t.SetCellSimple(i+1, 2, itm.StartTime)
+		t.SetCellSimple(i+1, 3, itm.EndTime)
+		t.SetCellSimple(i+1, 4, itm.Duration)
+		t.SetCellSimple(i+1, 5, itm.Indices)
+		t.SetCellSimple(i+1, 6, itm.SuccessfulShards)
+		t.SetCellSimple(i+1, 7, itm.FailedShards)
+		t.SetCellSimple(i+1, 8, itm.TotalShards)
+	}
+	t.SetFixed(2, 1)
+	t.Select(2, 1)
+	t.SetSelectable(true, false)
+	t.SetSelectedFunc(func(row, column int) {
+
+	})
+	t.SetDoneFunc(func(key tcell.Key) {
+		t.Clear()
+		app.SetFocus(repoTable)
 	})
 }
 
