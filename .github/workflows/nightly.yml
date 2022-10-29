@@ -1,12 +1,14 @@
-name: goreleaser
+name: goreleaser-nightly
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - 'main'
+  workflow_dispatch:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   goreleaser:
@@ -24,6 +26,6 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release --rm-dist --nightly
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
