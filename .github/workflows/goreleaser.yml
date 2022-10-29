@@ -5,6 +5,12 @@ on:
     tags:
       - '*'
 
+nightly:
+  publish_release: true
+  keep_single_release: true
+  name_template: '{{ incminor .Version }}-nightly'
+  tag_name: nightly
+
 permissions:
   contents: write
 
