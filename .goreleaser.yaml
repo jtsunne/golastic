@@ -8,9 +8,3 @@ builds:
     goarch:
       - amd64
       - arm64
-
-nightly:
-  publish_release: true
-  keep_single_release: true
-  name_template: '{{ incminor .Version }}-nightly'
-  tag_name: nightly
