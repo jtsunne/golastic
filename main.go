@@ -470,7 +470,7 @@ func selectedIndexFunc(row int, _ int, tbl *tview.Table) {
 
 	tvInfo.SetTitle(fmt.Sprintf(" Index [%s] Settings ", selectedIndexName))
 	body, _ := io.ReadAll(r.Body)
-	tvInfo.SetText(string(body))
+	tvInfo.SetText(Utils.ColorizeJson(string(body)))
 	pages.SwitchToPage("info")
 }
 

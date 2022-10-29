@@ -53,3 +53,33 @@ func ParseEsUrl(u string) string {
 	}
 	return fmt.Sprintf("%s://%s:%s", schema, domain, port)
 }
+
+func ColorizeJson(s string) string {
+	var r string
+	open := false
+	for _, chr := range strings.Split(s, "") {
+		if chr == "\"" && !open {
+			open = true
+			r = r + "[darkred]\""
+		} else if chr == "\"" && open {
+			open = false
+			r = r + "\"[white]"
+		} else {
+			r = r + chr
+		}
+	}
+	sa := strings.Split(r, "")
+	r = ""
+	for _, chr := range sa {
+		switch chr {
+		case "{":
+			r = r + "[yellow]{[white]"
+		case "}":
+			r = r + "[yellow]}[white]"
+		default:
+			r = r + chr
+		}
+	}
+
+	return r
+}
