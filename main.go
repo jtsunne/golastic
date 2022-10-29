@@ -60,7 +60,7 @@ func init() {
 	header.SetText("F1: Help | F2: Nodes | F3: Indices")
 
 	footer.SetBorder(true).SetTitleAlign(tview.AlignRight).SetTitle(" Quick Help ")
-	footer.SetText("Ctrl+I - Sort by Name | Ctrl+O - Sort by DocCount")
+	footer.SetText("i - Sort by Name | o - Sort by DocCount")
 
 	tvInfo.SetBorder(true)
 	tvInfo.SetDynamicColors(true).SetRegions(true)
@@ -549,7 +549,7 @@ func main() {
 			pages.SwitchToPage("nodes")
 			return nil
 		case tcell.KeyF3:
-			footer.SetText("Ctrl+I - Sort by Name | Ctrl+O - Sort by DocCount")
+			footer.SetText("i - Sort by Name | o - Sort by DocCount")
 			pages.SwitchToPage("indices")
 			return nil
 		}
