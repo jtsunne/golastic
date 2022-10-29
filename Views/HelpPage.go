@@ -14,8 +14,8 @@ Global HotKeys:
 	Ctrl+Q - Quit
 
 Indices Page HotKeys:
-	Ctrl+I - Sort indices by Index Name
-	Ctrl+O - Sort indices by Documents Count
+	i      - Sort indices by Index Name
+	o      - Sort indices by Documents Count
 	Ctrl+\ - Set filter for the Indices view
 	Ctrl+E - Remove selected Index
 	Ctrl+P - Set Replicas Count for the selected index
