@@ -545,7 +545,7 @@ func main() {
 		case tcell.KeyF1:
 			pages.SwitchToPage("help")
 		case tcell.KeyF2:
-			footer.SetText("Ctrl+I - Sort by IP | Ctrl+O - Sort by Node")
+			footer.SetText("Ctrl+I - Sort by IP | Ctrl+O - Sort by Node | r - Show Repositories")
 			pages.SwitchToPage("nodes")
 			return nil
 		case tcell.KeyF3:
