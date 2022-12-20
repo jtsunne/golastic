@@ -60,7 +60,7 @@ func init() {
 	header.SetText("F1: Help | F2: Nodes | F3: Indices")
 
 	footer.SetBorder(true).SetTitleAlign(tview.AlignRight).SetTitle(" Quick Help ")
-	footer.SetText("i - Sort by Name | o - Sort by DocCount")
+	footer.SetText("i - Sort by Name | o - Sort by DocCount | Ctrl+E - Delete Index | Ctrl+P - Set Replicas")
 
 	tvInfo.SetBorder(true)
 	tvInfo.SetDynamicColors(true).SetRegions(true)
