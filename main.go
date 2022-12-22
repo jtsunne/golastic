@@ -26,11 +26,13 @@ var (
 	clusterNodesTags []Structs.EsClusterNodeTags
 	clusterRepos     []Structs.EsClusterRepository
 	clusterSnapshots map[string][]Structs.EsSnapshot
+	docs             Structs.EsDocs
 	app              = tview.NewApplication()
 	pages            = tview.NewPages()
 	helpPage         = tview.NewTextView()
 	tvNodes          = tview.NewTable()
 	tvIndices        = tview.NewTable()
+	tvDocsTable      = tview.NewTable()
 	repoTable        = tview.NewTable()
 	snapshotTable    = tview.NewTable()
 	header           = tview.NewTextView()
@@ -69,6 +71,11 @@ func init() {
 			pages.SwitchToPage("indices")
 		}
 	})
+	tvDocsTable.SetDoneFunc(func(k tcell.Key) {
+		if k == tcell.KeyEscape {
+			pages.SwitchToPage("indices")
+		}
+	})
 
 	tvIndices.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
@@ -84,6 +91,12 @@ func init() {
 			SetReplicasMessageBox(name.Text)
 			RefreshData()
 			return nil
+		case tcell.KeyCtrlBackslash:
+			r, _ := tvIndices.GetSelection()
+			name := tvIndices.GetCell(r, 0)
+			GetDocsFromIndex(name.Text)
+			pages.SwitchToPage("docs")
+			return nil
 		}
 		switch event.Rune() {
 		case 'I':
@@ -97,6 +110,9 @@ func init() {
 			return nil
 		case 'o':
 			SortData("docCount")
+			return nil
+		case '?':
+			app.SetFocus(filter)
 			return nil
 		}
 		return event
@@ -146,17 +162,23 @@ func init() {
 			AddItem(header, 3, 1, false).
 			AddItem(helpPage, 0, 1, true),
 		true, true)
-	pages.AddPage("nodes",
-		tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(header, 3, 1, false).
-			AddItem(tvNodes, 0, 1, true).
-			AddItem(footer, 3, 1, false),
-		true, true)
 	pages.AddPage("indices",
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(header, 3, 1, false).
 			AddItem(filter, 3, 1, false).
 			AddItem(tvIndices, 0, 1, true).
+			AddItem(footer, 3, 1, false),
+		true, true)
+	pages.AddPage("docs",
+		tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(header, 3, 1, false).
+			AddItem(tvDocsTable, 0, 1, true).
+			AddItem(footer, 3, 1, false),
+		true, true)
+	pages.AddPage("nodes",
+		tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(header, 3, 1, false).
+			AddItem(tvNodes, 0, 1, true).
 			AddItem(footer, 3, 1, false),
 		true, true)
 }
@@ -200,6 +222,36 @@ func RefreshData() {
 	FillRepos(clusterRepos, repoTable)
 	dt := time.Now()
 	footer.SetText("Data refreshed @ " + dt.Format(time.ANSIC))
+}
+
+func GetDocsFromIndex(idxName string) {
+	b := []byte(`{"query": { "match_all": {} }, "size": 100}`)
+	Utils.PostJson(fmt.Sprintf("%s/%s/_search", EsUrl, idxName), string(b), &docs)
+	tvDocsTable.Clear()
+	tvDocsTable.SetBorder(true)
+	tvDocsTable.SetCell(0, 0, tview.NewTableCell("_id").
+		SetTextColor(tcell.ColorYellow).SetAlign(tview.AlignCenter))
+	tvDocsTable.SetCell(0, 1, tview.NewTableCell("_source").
+		SetTextColor(tcell.ColorYellow).SetAlign(tview.AlignCenter))
+	for i, item := range docs.Hits.Hits {
+		tvDocsTable.SetCellSimple(i+1, 0, item.Id)
+		tvDocsTable.SetCellSimple(i+1, 1, string(item.Source))
+	}
+	tvDocsTable.SetFixed(2, 1)
+	tvDocsTable.Select(2, 1)
+	tvDocsTable.SetSelectable(true, false)
+	tvDocsTable.SetSelectedFunc(func(row, column int) {
+		r, _ := tvDocsTable.GetSelection()
+		name := tvDocsTable.GetCell(r, 1)
+		tvInfo.SetText(Utils.ColorizeJson(name.Text))
+		pages.SwitchToPage("info")
+	})
+	tvInfo.SetDoneFunc(func(k tcell.Key) {
+		if k == tcell.KeyEscape {
+			pages.SwitchToPage("docs")
+		}
+	})
+
 }
 
 func SortData(sortBy string) {
@@ -326,7 +378,7 @@ func FillIndices(idxs []Structs.EsIndices, t *tview.Table) {
 	t.SetCell(0, 0, tview.NewTableCell("Index").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 1, tview.NewTableCell("Index").
+	t.SetCell(0, 1, tview.NewTableCell("Alias").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
 	t.SetCell(0, 2, tview.NewTableCell("Health").
@@ -472,6 +524,11 @@ func selectedIndexFunc(row int, _ int, tbl *tview.Table) {
 	body, _ := io.ReadAll(r.Body)
 	tvInfo.SetText(Utils.ColorizeJson(string(body)))
 	pages.SwitchToPage("info")
+	tvInfo.SetDoneFunc(func(k tcell.Key) {
+		if k == tcell.KeyEscape {
+			pages.SwitchToPage("indices")
+		}
+	})
 }
 
 func tableDoneFunc(k tcell.Key, tbl *tview.Table) {
@@ -537,9 +594,6 @@ func main() {
 			tvIndices.Clear()
 			RefreshData()
 			FilterData(filter.GetText())
-		case tcell.KeyCtrlBackslash:
-			footer.SetText("KeyBS pressed")
-			app.SetFocus(filter)
 		case tcell.KeyCtrlQ:
 			app.Stop()
 		case tcell.KeyF1:

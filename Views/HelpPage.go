@@ -16,7 +16,7 @@ Global HotKeys:
 Indices Page HotKeys:
 	i      - Sort indices by Index Name
 	o      - Sort indices by Documents Count
-	Ctrl+\ - Set filter for the Indices view
+	?      - Set filter for the Indices view
 	Ctrl+E - Remove selected Index
 	Ctrl+P - Set Replicas Count for the selected index
 	Enter  - Show Index Settings

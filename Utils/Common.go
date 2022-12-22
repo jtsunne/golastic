@@ -27,6 +27,18 @@ func GetJson(url string, target interface{}) error {
 	return json.NewDecoder(r.Body).Decode(target)
 }
 
+func PostJson(url string, body string, target interface{}) error {
+	req, _ := http.NewRequest(http.MethodPost, url, strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	r, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+
+	return json.NewDecoder(r.Body).Decode(target)
+}
+
 func ParseEsUrl(u string) string {
 	schema := "http"
 	port := "9200"
