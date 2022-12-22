@@ -94,6 +94,7 @@ func init() {
 		case tcell.KeyCtrlBackslash:
 			r, _ := tvIndices.GetSelection()
 			name := tvIndices.GetCell(r, 0)
+			tvInfo.SetTitle(fmt.Sprintf(" Index [%s] Documents ", name.Text))
 			GetDocsFromIndex(name.Text)
 			pages.SwitchToPage("docs")
 			return nil
@@ -228,6 +229,7 @@ func GetDocsFromIndex(idxName string) {
 	b := []byte(`{"query": { "match_all": {} }, "size": 100}`)
 	Utils.PostJson(fmt.Sprintf("%s/%s/_search", EsUrl, idxName), string(b), &docs)
 	tvDocsTable.Clear()
+	tvDocsTable.SetTitle(fmt.Sprintf(" Index [%s] Documents ", idxName))
 	tvDocsTable.SetBorder(true)
 	tvDocsTable.SetCell(0, 0, tview.NewTableCell("_id").
 		SetTextColor(tcell.ColorYellow).SetAlign(tview.AlignCenter))
@@ -243,7 +245,7 @@ func GetDocsFromIndex(idxName string) {
 	tvDocsTable.SetSelectedFunc(func(row, column int) {
 		r, _ := tvDocsTable.GetSelection()
 		name := tvDocsTable.GetCell(r, 1)
-		tvInfo.SetText(Utils.ColorizeJson(name.Text))
+		tvInfo.SetText(Utils.PrettyJson(name.Text))
 		pages.SwitchToPage("info")
 	})
 	tvInfo.SetDoneFunc(func(k tcell.Key) {
@@ -522,7 +524,7 @@ func selectedIndexFunc(row int, _ int, tbl *tview.Table) {
 
 	tvInfo.SetTitle(fmt.Sprintf(" Index [%s] Settings ", selectedIndexName))
 	body, _ := io.ReadAll(r.Body)
-	tvInfo.SetText(Utils.ColorizeJson(string(body)))
+	tvInfo.SetText(Utils.PrettyJson(string(body)))
 	pages.SwitchToPage("info")
 	tvInfo.SetDoneFunc(func(k tcell.Key) {
 		if k == tcell.KeyEscape {

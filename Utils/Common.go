@@ -3,6 +3,7 @@ package Utils
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tidwall/pretty"
 	"net"
 	"net/http"
 	"net/url"
@@ -64,6 +65,10 @@ func ParseEsUrl(u string) string {
 		domain = s.Host
 	}
 	return fmt.Sprintf("%s://%s:%s", schema, domain, port)
+}
+
+func PrettyJson(s string) string {
+	return string(pretty.Pretty([]byte(s)))
 }
 
 func ColorizeJson(s string) string {
