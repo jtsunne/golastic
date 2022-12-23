@@ -59,7 +59,8 @@ func init() {
 	RefreshData()
 
 	header.SetBorder(true)
-	header.SetText("F1: Help | F2: Nodes | F3: Indices")
+	header.SetDynamicColors(true)
+	header.SetText("F1: Help | [yellow]F2: Nodes[white] | F3: Indices")
 
 	footer.SetBorder(true).SetTitleAlign(tview.AlignRight).SetTitle(" Quick Help ")
 	footer.SetText("i - Sort by Name | o - Sort by DocCount | Ctrl+E - Delete Index | Ctrl+P - Set Replicas")
@@ -68,11 +69,13 @@ func init() {
 	tvInfo.SetDynamicColors(true).SetRegions(true)
 	tvInfo.SetDoneFunc(func(k tcell.Key) {
 		if k == tcell.KeyEscape {
+			header.SetText("F1: Help | F2: Nodes | [yellow]F3: Indices[white]")
 			pages.SwitchToPage("indices")
 		}
 	})
 	tvDocsTable.SetDoneFunc(func(k tcell.Key) {
 		if k == tcell.KeyEscape {
+			header.SetText("F1: Help | F2: Nodes | [yellow]F3: Indices[white]")
 			pages.SwitchToPage("indices")
 		}
 	})
@@ -458,6 +461,7 @@ func FillRepos(r []Structs.EsClusterRepository, t *tview.Table) {
 		app.SetFocus(snapshotTable)
 	})
 	t.SetDoneFunc(func(key tcell.Key) {
+		header.SetText("F1: Help | [yellow]F2: Nodes[white] | F3: Indices")
 		pages.SwitchToPage("nodes")
 	})
 }
@@ -528,6 +532,7 @@ func selectedIndexFunc(row int, _ int, tbl *tview.Table) {
 	pages.SwitchToPage("info")
 	tvInfo.SetDoneFunc(func(k tcell.Key) {
 		if k == tcell.KeyEscape {
+			header.SetText("F1: Help | F2: Nodes | [yellow]F3: Indices[white]")
 			pages.SwitchToPage("indices")
 		}
 	})
@@ -599,13 +604,16 @@ func main() {
 		case tcell.KeyCtrlQ:
 			app.Stop()
 		case tcell.KeyF1:
+			header.SetText("[yellow]F1: Help[white] | F2: Nodes | F3: Indices")
 			pages.SwitchToPage("help")
 		case tcell.KeyF2:
 			footer.SetText("Ctrl+I - Sort by IP | Ctrl+O - Sort by Node | r - Show Repositories")
+			header.SetText("F1: Help | [yellow]F2: Nodes[white] | F3: Indices")
 			pages.SwitchToPage("nodes")
 			return nil
 		case tcell.KeyF3:
 			footer.SetText("i - Sort by Name | o - Sort by DocCount")
+			header.SetText("F1: Help | F2: Nodes | [yellow]F3: Indices[white]")
 			pages.SwitchToPage("indices")
 			return nil
 		}
