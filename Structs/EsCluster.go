@@ -46,3 +46,15 @@ type EsSnapshot struct {
 	FailedShards     string `json:"failed_shards"`
 	TotalShards      string `json:"total_shards"`
 }
+
+type EsNodeAllocation struct {
+	Shards      string `json:"shards"`
+	DiskIndices string `json:"disk.indices"`
+	DiskUsed    string `json:"disk.used"`
+	DiskAvail   string `json:"disk.avail"`
+	DiskTotal   string `json:"disk.total"`
+	DiskPercent string `json:"disk.percent"`
+	Host        string `json:"host"`
+	Ip          string `json:"ip"`
+	Node        string `json:"node"`
+}
