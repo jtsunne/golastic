@@ -20,6 +20,7 @@ import (
 var (
 	EsUrl            string
 	nodes            []Structs.EsNode
+	nodesAllocation  []Structs.EsNodeAllocation
 	indices          []Structs.EsIndices
 	idxAliases       []Structs.EsIndexAlias
 	clusterNodes     []Structs.EsClusterNode
@@ -193,6 +194,8 @@ func RefreshData() {
 		return nodes[i].Name < nodes[j].Name
 	})
 
+	Utils.GetJson(fmt.Sprintf("%s/_cat/allocation?format=json", EsUrl), &nodesAllocation)
+
 	Utils.GetJson(fmt.Sprintf("%s/_cat/nodeattrs?format=json", EsUrl), &clusterNodesTags)
 
 	var clusterNode Structs.EsClusterNode
@@ -322,19 +325,30 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 	t.SetCell(0, 6, tview.NewTableCell("CPU").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 7, tview.NewTableCell("LA 1m").
+
+	t.SetCell(0, 7, tview.NewTableCell("Shards").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 8, tview.NewTableCell("LA 5m").
+	t.SetCell(0, 8, tview.NewTableCell("Disk.i").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 9, tview.NewTableCell("LA 15m").
+	t.SetCell(0, 9, tview.NewTableCell("Disk %").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 10, tview.NewTableCell("Version").
+
+	t.SetCell(0, 10, tview.NewTableCell("LA 1m").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
-	t.SetCell(0, 11, tview.NewTableCell("Tags").
+	t.SetCell(0, 11, tview.NewTableCell("LA 5m").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 12, tview.NewTableCell("LA 15m").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 13, tview.NewTableCell("Version").
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter))
+	t.SetCell(0, 14, tview.NewTableCell("Tags").
 		SetTextColor(tcell.ColorYellow).
 		SetAlign(tview.AlignCenter))
 	for i, item := range n {
@@ -345,12 +359,21 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 		t.SetCellSimple(i+1, 4, item.HeapPercent)
 		t.SetCellSimple(i+1, 5, item.RAMPercent)
 		t.SetCellSimple(i+1, 6, item.CPU)
-		t.SetCellSimple(i+1, 7, item.Load1M)
-		t.SetCellSimple(i+1, 8, item.Load5M)
-		t.SetCellSimple(i+1, 9, item.Load15M)
+
+		for _, itm := range nodesAllocation {
+			if itm.Ip == item.IP {
+				t.SetCellSimple(i+1, 7, itm.Shards)
+				t.SetCellSimple(i+1, 8, itm.DiskIndices)
+				t.SetCellSimple(i+1, 9, itm.DiskPercent)
+			}
+		}
+
+		t.SetCellSimple(i+1, 10, item.Load1M)
+		t.SetCellSimple(i+1, 11, item.Load5M)
+		t.SetCellSimple(i+1, 12, item.Load15M)
 		for _, itm := range clusterNodes {
 			if itm.Name == item.Name {
-				t.SetCellSimple(i+1, 10, itm.Version.Number)
+				t.SetCellSimple(i+1, 13, itm.Version.Number)
 			}
 		}
 		s := ""
@@ -366,7 +389,7 @@ func FillNodes(n []Structs.EsNode, t *tview.Table) {
 		if s == "" {
 			s = "N/A"
 		}
-		t.SetCellSimple(i+1, 11, s)
+		t.SetCellSimple(i+1, 14, s)
 	}
 	t.SetFixed(1, 1)
 	//t.SetSelectedFunc(func(row, column int) {
@@ -597,6 +620,9 @@ func SetReplicasMessageBox(idxName string) {
 func main() {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
+		case tcell.KeyCtrlH:
+			popup := tview.NewBox().SetTitle("This is a popup window").SetBorder(true)
+			app.SetRoot(popup, true)
 		case tcell.KeyCtrlR:
 			tvIndices.Clear()
 			RefreshData()
